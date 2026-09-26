@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Record System</title>
+<style>
+  :root {
+    --bg: #fbeef0;
+    --card-bg: #ffffff;
+    --input-bg: #fdf1f2;
+    --input-border: #f3d9dd;
+    --text-dark: #4a3540;
+    --text-muted: #b48c94;
+    --accent: #c97a91;
+    --accent-hover: #b96780;
+    --pill-bg: #f6d9de;
+    --pill-text: #a4677a;
+    --link: #a4677a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: var(--text-dark);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 60px 20px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 48px 56px;
+    width: 100%;
+    max-width: 720px;
+    box-shadow: 0 10px 30px rgba(180, 120, 140, 0.12);
+  }
+
+  .card.wide { max-width: 1200px; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  h1 {
+    text-align: center;
+    font-size: 2.1rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    margin: 0 0 36px;
+    font-size: 0.95rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0 0 24px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    margin-top: 20px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    font-size: 0.95rem;
+    color: var(--text-dark);
+  }
+  input[type="text"]::placeholder { color: var(--text-muted); opacity: 0.8; }
+  input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+  .btn {
+    display: block;
+    width: 100%;
+    margin-top: 32px;
+    padding: 15px 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--accent-hover); }
+
+  .btn-small { width: auto; margin-top: 0; padding: 8px 18px; font-size: 0.85rem; }
+  .btn-outline { background: var(--pill-bg); color: var(--pill-text); }
+  .btn-outline:hover { background: #f0c3cb; }
+
+  .link-center {
+    display: block;
+    text-align: center;
+    margin-top: 24px;
+    color: var(--link);
+    text-decoration: underline;
+    font-size: 0.95rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  .link-back {
+    color: var(--link);
+    text-decoration: none;
+    font-size: 0.95rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+
+  thead th {
+    text-align: left;
+    padding: 16px 12px;
+    background: var(--input-bg);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  thead th:first-child { border-top-left-radius: 8px; }
+  thead th:last-child { border-top-right-radius: 8px; }
+
+  tbody td {
+    padding: 18px 12px;
+    border-bottom: 1px solid var(--input-border);
+    font-size: 0.95rem;
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 5px 16px;
+    border-radius: 20px;
+    background: var(--pill-bg);
+    color: var(--pill-text);
+    font-size: 0.85rem;
+  }
+
+  .actions { display: flex; gap: 10px; }
+
+  .footer-link { text-align: center; margin-top: 28px; }
+
+  .result-box {
+    background: var(--input-bg);
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .result-box h2 { margin-bottom: 12px; text-align: center; }
+  .result-box p { color: var(--text-muted); margin: 0 0 20px; }
+</style>
+</head>
+<body>
+
+  <!-- ADD STUDENT VIEW -->
+  <div class="card view active" id="view-add">
+    <h1>Student Record System</h1>
+    <p class="subtitle">Add a new student record</p>
+    <h2>Add Student</h2>
+
+    <form onsubmit="return addStudent(event)">
+      <label for="add_student_id">Student ID</label>
+      <input type="text" id="add_student_id" placeholder="Enter student ID" required>
+
+      <label for="add_name">Name</label>
+      <input type="text" id="add_name" placeholder="Enter student's full name" required>
+
+      <label for="add_program">Program</label>
+      <input type="text" id="add_program" placeholder="Enter program" required>
+
+      <button type="submit" class="btn">Add Student</button>
+    </form>
+
+    <button class="link-center" onclick="showView('view-dashboard')">View Student Records</button>
+  </div>
+
+  <!-- DASHBOARD VIEW -->
+  <div class="card wide view" id="view-dashboard">
+    <h1>Student Records</h1>
+    <p class="subtitle">Manage registered student information</p>
+
+    <div class="top-row">
+      <button class="btn btn-small" onclick="showView('view-add')">+ Add New Student</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Student ID</th>
+          <th>Name</th>
+          <th>Program</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="student-table-body"></tbody>
+    </table>
+
+    <div class="footer-link">
+      <button class="link-back" onclick="showView('view-add')">&larr; Back to Add Student</button>
+    </div>
+  </div>
+
+  <!-- EDIT VIEW -->
+  <div class="card view" id="view-edit">
+    <h1>Edit Student</h1>
+    <p class="subtitle">Update student information</p>
+
+    <form onsubmit="return updateStudent(event)">
+      <input type="hidden" id="edit_id">
+
+      <label for="edit_student_id">Student ID</label>
+      <input type="text" id="edit_student_id" required>
+
+      <label for="edit_name">Name</label>
+      <input type="text" id="edit_name" required>
+
+      <label for="edit_program">Program</label>
+      <input type="text" id="edit_program" required>
+
+      <button type="submit" class="btn">Update Student</button>
+    </form>
+
+    <button class="link-center" onclick="showView('view-dashboard')">Cancel</button>
+  </div>
+
+  <!-- ARCHIVE CONFIRMATION VIEW -->
+  <div class="card view" id="view-archived">
+    <div class="result-box">
+      <h2>Student Archived Successfully!</h2>
+      <p>The student record was archived and was not permanently deleted.</p>
+      <button class="link-back" onclick="showView('view-dashboard')">Back to Student Records</button>
+    </div>
+  </div>
+
+<script>
+  // In-memory data (resets on page reload)
+  let students = [
+    { id: 7, studentId: "2026-123", name: "Charisma Gamboa", program: "BSIT", status: "Active" },
+    { id: 6, studentId: "2026-245", name: "Juan Dela Cruz", program: "Bachelor Of Science In Information Technology", status: "Active" }
+  ];
+  let nextId = 8;
+
+  function showView(id) {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    if (id === "view-dashboard") renderTable();
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById("student-table-body");
+    tbody.innerHTML = "";
+    students.forEach(s => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${s.id}</td>
+        <td>${s.studentId}</td>
+        <td>${s.name}</td>
+        <td>${s.program}</td>
+        <td><span class="pill">${s.status}</span></td>
+        <td class="actions">
+          <button class="btn btn-small" onclick="openEdit(${s.id})">Edit</button>
+          <button class="btn btn-small btn-outline" onclick="archiveStudent(${s.id})">Archive</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function addStudent(e) {
+    e.preventDefault();
+    const studentId = document.getElementById("add_student_id").value.trim();
+    const name = document.getElementById("add_name").value.trim();
+    const program = document.getElementById("add_program").value.trim();
+
+    students.push({ id: nextId++, studentId, name, program, status: "Active" });
+
+    e.target.reset();
+    showView("view-dashboard");
+    return false;
+  }
+
+  function openEdit(id) {
+    const s = students.find(st => st.id === id);
+    if (!s) return;
+    document.getElementById("edit_id").value = s.id;
+    document.getElementById("edit_student_id").value = s.studentId;
+    document.getElementById("edit_name").value = s.name;
+    document.getElementById("edit_program").value = s.program;
+    showView("view-edit");
+  }
+
+  function updateStudent(e) {
+    e.preventDefault();
+    const id = parseInt(document.getElementById("edit_id").value, 10);
+    const s = students.find(st => st.id === id);
+    if (s) {
+      s.studentId = document.getElementById("edit_student_id").value.trim();
+      s.name = document.getElementById("edit_name").value.trim();
+      s.program = document.getElementById("edit_program").value.trim();
+    }
+    showView("view-dashboard");
+    return false;
+  }
+
+  function archiveStudent(id) {
+    students = students.filter(st => st.id !== id);
+    showView("view-archived");
+  }
+
+  // Initial render
+  renderTable();
+</script>
+
+</body>
+</html>
