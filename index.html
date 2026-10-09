@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Record System</title>
+<style>
+    :root {
+        --plum:      #3a1030;
+        --plum-2:    #4d1a40;
+        --plum-text: #e9c4d8;
+        --pink:      #d63384;
+        --pink-dark: #b02770;
+        --pink-soft: #fde4ef;
+        --page:      #fcf1f6;
+        --card:      #ffffff;
+        --line:      #f0cfde;
+        --ink:       #3b1a2c;
+        --muted:     #8f5a74;
+        --sidebar-w: 248px;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { scroll-padding-top: 80px; }
+
+    body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        background: var(--page); color: var(--ink); margin: 0; line-height: 1.45;
+    }
+
+    /* ---------- Layout ---------- */
+    .app { display: flex; min-height: 100vh; }
+
+    .sidebar {
+        position: fixed; inset: 0 auto 0 0; width: var(--sidebar-w);
+        background: var(--plum); color: var(--plum-text);
+        display: flex; flex-direction: column; padding: 22px 14px; z-index: 60;
+        transition: transform .25s;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 10px 22px; color: #fff; font-weight: 700; font-size: 17px; }
+    .brand-mark { width: 36px; height: 36px; border-radius: 10px; background: var(--pink); display: grid; place-items: center; font-size: 18px; }
+
+    .nav { display: flex; flex-direction: column; gap: 4px; }
+    .nav a {
+        display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 9px;
+        color: var(--plum-text); text-decoration: none; font-weight: 600; font-size: 14px;
+    }
+    .nav a:hover { background: var(--plum-2); color: #fff; }
+    .nav a.on { background: var(--pink); color: #fff; }
+    .nav .count { margin-left: auto; background: rgba(255,255,255,.16); border-radius: 10px; padding: 1px 9px; font-size: 12px; }
+    .side-foot { margin-top: auto; padding: 0 10px; font-size: 12px; color: #b98aa5; }
+
+    .main { margin-left: var(--sidebar-w); flex: 1; min-width: 0; }
+
+    .topbar {
+        position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 14px;
+        padding: 14px 28px; background: rgba(252, 241, 246, .92); backdrop-filter: blur(6px);
+        border-bottom: 1px solid var(--line);
+    }
+    .menu-btn { display: none; background: var(--plum); padding: 9px 12px; }
+
+    .search { flex: 1; max-width: 520px; position: relative; display: flex; gap: 8px; }
+    .search input[type=search] {
+        width: 100%; padding: 10px 14px 10px 38px; border: 1px solid var(--line); border-radius: 10px;
+        background: #fff; font-size: 14px; color: var(--ink);
+    }
+    .search input[type=search]:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 0 3px rgba(214, 51, 132, .15); }
+    .search .icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); pointer-events: none; opacity: .6; }
+    .search .go { background: var(--pink); } .search .go:hover { background: var(--pink-dark); }
+    .search .clear { background: #8a7a83; }
+    .kbd { font-size: 11px; border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; color: var(--muted); background: #fff; }
+
+    .content { padding: 28px; max-width: 1280px; }
+    h1 { margin: 0 0 4px; font-size: 26px; color: var(--ink); }
+    h2 { margin: 0; font-size: 17px; color: var(--ink); }
+    .sub { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+
+    /* ---------- Stat cards ---------- */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat {
+        background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px;
+        text-decoration: none; color: inherit; display: block;
+    }
+    .stat .label { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .stat .num   { font-size: 34px; font-weight: 800; line-height: 1.15; margin-top: 6px; }
+    .stat .note  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .stat.hero   { background: var(--pink); border-color: var(--pink); color: #fff; }
+    .stat.hero .label, .stat.hero .note { color: #ffe3ef; }
+    a.stat:hover { border-color: var(--pink); }
+    a.stat:focus-visible { outline: 3px solid #7b1fa2; outline-offset: 2px; }
+
+    /* ---------- Cards ---------- */
+    .split { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+    .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .result-note { font-size: 13px; color: var(--muted); }
+
+    label { display: block; color: #7d2250; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+
+    input[type=text] {
+        width: 100%; padding: 10px 11px; border: 1px solid #e8a1b8; border-radius: 8px;
+        margin-bottom: 4px; font-size: 14px; background: #fff; color: var(--ink);
+    }
+    input[type=text]:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 0 3px rgba(214, 51, 132, .15); }
+    input.invalid { border-color: #dc3545; background: #fff5f6; }
+
+    .field { margin-bottom: 12px; }
+    .hint  { font-size: 12px; color: var(--muted); min-height: 16px; }
+    .err   { font-size: 13px; color: #a30021; min-height: 16px; font-weight: 700; }
+
+    button, .btn {
+        border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+        color: white; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block;
+        font-family: inherit;
+    }
+    button:focus-visible, .btn:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #7b1fa2; outline-offset: 2px; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .save-button    { background: var(--pink); width: 100%; } .save-button:hover { background: var(--pink-dark); }
+    .update-button  { background: #9c27b0; } .update-button:hover  { background: #7b1fa2; }
+    .cancel-button  { background: #888; margin-left: 5px; }
+    .edit-button    { background: var(--pink); padding: 7px 12px; } .edit-button:hover { background: var(--pink-dark); }
+    .delete-button  { background: #dc3545; padding: 7px 12px; } .delete-button:hover { background: #b02a37; }
+    .restore-button { background: #2e8b57; padding: 7px 12px; } .restore-button:hover { background: #226b43; }
+
+    /* ---------- Table ---------- */
+    .table-wrap { overflow-x: auto; margin: 0 -22px -22px; }
+    table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    th { text-align: left; font-size: 12.5px; color: var(--muted); font-weight: 700; padding: 10px 14px; border-bottom: 1px solid var(--line); background: #fff8fb; }
+    td { padding: 12px 14px; border-bottom: 1px solid #f7e1ea; font-size: 14px; vertical-align: middle; }
+    tbody tr:hover { background: #fff5f9; }
+    tbody tr:last-child td { border-bottom: none; }
+    th:first-child, td:first-child { padding-left: 22px; }
+    th:last-child,  td:last-child  { padding-right: 22px; text-align: right; white-space: nowrap; }
+    .who { display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--pink-soft); color: var(--pink-dark); display: grid; place-items: center; font-weight: 800; font-size: 13px; flex: none; }
+    .empty { text-align: center !important; color: var(--muted); padding: 34px 14px !important; }
+    .action-form { display: inline; }
+    .muted { color: var(--muted); font-size: 13px; }
+
+    /* ---------- Toast ---------- */
+    .toast {
+        position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+        padding: 13px 22px; border-radius: 8px; font-weight: 700; z-index: 200;
+        box-shadow: 0 4px 14px rgba(0,0,0,.15); transition: opacity .4s, top .4s;
+    }
+    .toast.success { background: #dff5e5; color: #267a3e; }
+    .toast.error   { background: #ffe0e6; color: #a30021; }
+    .toast.hide    { opacity: 0; top: 0; }
+
+    /* ---------- Double-confirmation modal ---------- */
+    .overlay {
+        position: fixed; inset: 0; background: rgba(60, 10, 35, .55);
+        display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+    }
+    .overlay.open { display: flex; }
+    .modal { background: white; border-radius: 14px; padding: 26px; width: 100%; max-width: 440px; }
+    .modal h3 { margin: 0 0 10px; color: #b02a37; }
+    .modal p  { color: #444; line-height: 1.5; }
+    .modal .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .step { display: none; } .step.on { display: block; }
+    .box-warn { background: #fff3cd; border: 1px solid #ffe08a; padding: 10px 12px; border-radius: 8px; font-size: 14px; }
+
+    .scrim { display: none; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 1100px) {
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .split { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 860px) {
+        .sidebar { transform: translateX(-100%); }
+        body.nav-open .sidebar { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.4); }
+        body.nav-open .scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 55; }
+        .main { margin-left: 0; }
+        .menu-btn { display: inline-block; }
+        .topbar { padding: 12px 16px; }
+        .content { padding: 20px 16px; }
+        .kbd { display: none; }
+    }
+    @media (max-width: 480px) {
+        .stats { gap: 10px; }
+        .stat { padding: 14px; }
+        .stat .num { font-size: 28px; }
+        .search .go { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { .toast, .sidebar { transition: none; } }
+</style>
+</head>
+
+<body>
+<div class="app">
+
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+        <div class="brand"><span class="brand-mark">🌸</span> Student Records</div>
+        <nav class="nav">
+            <a href="#" id="navActive" data-view="active">🎓 Active students <span class="count" id="navActiveCount">0</span></a>
+            <a href="#" id="navArchive" data-view="archive">📦 Archive <span class="count" id="navArchiveCount">0</span></a>
+        </nav>
+        <div class="side-foot">Archived records are never permanently deleted.</div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+
+        <header class="topbar">
+            <button type="button" class="menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="sidebar">☰</button>
+            <form class="search" id="searchForm" role="search" onsubmit="return false">
+                <span class="icon" aria-hidden="true">🔍</span>
+                <input type="search" id="q" maxlength="100" aria-label="Search students" placeholder="Search students by name, ID or program">
+                <a href="#" class="btn clear" id="clearSearch" hidden>Clear</a>
+            </form>
+            <span class="kbd" title="Press / to search">/</span>
+        </header>
+
+        <main class="content">
+            <div class="toast" id="toast" role="status" hidden></div>
+
+            <h1>Dashboard</h1>
+            <p class="sub">Add, update and archive student records.</p>
+
+            <section class="stats" aria-label="Summary">
+                <a class="stat hero" href="#" data-view="active">
+                    <div class="label">Active students</div>
+                    <div class="num" id="statActive">0</div>
+                    <div class="note">Currently enrolled</div>
+                </a>
+                <a class="stat" href="#" data-view="archive">
+                    <div class="label">Archived</div>
+                    <div class="num" id="statArchived">0</div>
+                    <div class="note">Can be restored anytime</div>
+                </a>
+                <div class="stat">
+                    <div class="label">Total records</div>
+                    <div class="num" id="statTotal">0</div>
+                    <div class="note">Active + archived</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Programs</div>
+                    <div class="num" id="statPrograms">0</div>
+                    <div class="note">Among active students</div>
+                </div>
+            </section>
+
+            <!-- ACTIVE VIEW -->
+            <div class="split" id="activeView">
+                <section class="card">
+                    <div class="card-head"><h2 id="formTitle">➕ Add student</h2></div>
+                    <form id="studentForm" novalidate>
+                        <div class="field">
+                            <label for="student_id">Student ID</label>
+                            <input type="text" id="student_id" name="student_id" inputmode="numeric" maxlength="20" placeholder="e.g. 2024-0123" autocomplete="off">
+                            <div class="hint">Numbers only. Dash (-) allowed, e.g. 2024-0123</div>
+                            <div class="err" data-for="student_id"></div>
+                        </div>
+                        <div class="field">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" maxlength="100" placeholder="e.g. Maria Santos" autocomplete="off">
+                            <div class="hint">Letters only (spaces, . ' - allowed)</div>
+                            <div class="err" data-for="name"></div>
+                        </div>
+                        <div class="field">
+                            <label for="program">Program</label>
+                            <input type="text" id="program" name="program" maxlength="100" placeholder="e.g. BS Information Technology" autocomplete="off">
+                            <div class="hint">Letters only</div>
+                            <div class="err" data-for="program"></div>
+                        </div>
+                        <button type="submit" class="save-button" id="submitBtn">Save student</button>
+                        <button type="button" class="btn cancel-button" id="cancelEdit" hidden>Cancel</button>
+                    </form>
+                </section>
+
+                <section class="card">
+                    <div class="card-head">
+                        <h2>📋 Active students</h2>
+                        <span class="result-note" id="activeNote"></span>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>ID</th><th>Student ID</th><th>Name</th><th>Program</th><th>Actions</th></tr></thead>
+                            <tbody id="activeBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ARCHIVE VIEW -->
+            <section class="card" id="archiveView" hidden>
+                <div class="card-head">
+                    <h2>📦 Archived students</h2>
+                    <span class="result-note" id="archiveNote"></span>
+                </div>
+                <p class="muted" style="margin:0 0 14px">Archived records are kept safely and are never permanently deleted. Restore one to bring it back to Active.</p>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>ID</th><th>Student ID</th><th>Name</th><th>Program</th><th>Archived on</th><th>Actions</th></tr></thead>
+                        <tbody id="archiveBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<!-- DOUBLE-CONFIRMATION MODAL -->
+<div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+        <form id="archiveForm">
+            <div class="step on" id="step1">
+                <h3 id="mTitle">Archive this student?</h3>
+                <p><strong id="aName"></strong> (ID <span id="aSid1"></span>) will move to the Archive.</p>
+                <div class="box-warn">Nothing is permanently deleted. You can restore this record anytime.</div>
+                <div class="row">
+                    <button type="button" class="cancel-button" data-close>Cancel</button>
+                    <button type="button" class="delete-button" id="toStep2">Continue</button>
+                </div>
+            </div>
+            <div class="step" id="step2">
+                <h3>Confirm archiving</h3>
+                <p>To confirm, type the Student ID <strong id="aSid2"></strong> below.</p>
+                <input type="text" id="aConfirm" autocomplete="off" placeholder="Type Student ID">
+                <div class="row">
+                    <button type="button" class="cancel-button" data-close>Cancel</button>
+                    <button type="submit" class="delete-button" id="doArchive" disabled>Archive student</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+/* =========================
+   DATA (saved in this browser's localStorage; replaces the MySQL database)
+========================= */
+const KEY = 'student_records_v1';
+let students = [];
+let memoryOnly = false;
+
+function load() {
+    try {
+        const raw = localStorage.getItem(KEY);
+        if (raw) { students = JSON.parse(raw); return; }
+    } catch (e) { memoryOnly = true; }
+    // First run: sample data
+    const now = new Date().toISOString();
+    students = [
+        { id: 1, student_id: '2024-0101', name: 'Maria Santos',        program: 'BS Information Technology', deleted_at: null },
+        { id: 2, student_id: '2024-0102', name: 'Juan Dela Cruz',      program: 'BS Computer Science',       deleted_at: null },
+        { id: 3, student_id: '2024-0103', name: 'Angela Reyes',        program: 'BS Information Technology', deleted_at: null },
+        { id: 4, student_id: '2023-0457', name: 'Carlo Mendoza',       program: 'BS Business Administration',deleted_at: null },
+        { id: 5, student_id: '2023-0458', name: 'Patricia Villanueva', program: 'BS Nursing',                deleted_at: null },
+        { id: 6, student_id: '2022-0899', name: 'Roberto Garcia',      program: 'BS Education',              deleted_at: now }
+    ];
+    save();
+}
+function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(students)); } catch (e) { memoryOnly = true; }
+}
+function nextId() { return students.reduce((m, s) => Math.max(m, s.id), 0) + 1; }
+
+/* =========================
+   HELPERS
+========================= */
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const noDash = s => s.replace(/-/g, '');
+const initial = n => (n.trim().charAt(0) || '?').toUpperCase();
+const fmtDate = iso => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+let view = 'active', q = '', editId = null;
+
+function toast(msg, type) {
+    const t = $('toast');
+    t.textContent = msg; t.className = 'toast ' + type; t.hidden = false;
+    clearTimeout(toast.a); clearTimeout(toast.b);
+    toast.a = setTimeout(() => t.classList.add('hide'), 3500);
+    toast.b = setTimeout(() => { t.hidden = true; }, 4000);
+}
+
+/* =========================
+   VALIDATION (same rules as the PHP version)
+========================= */
+const rules = {
+    student_id: { re: /^\d+(-\d+)*$/,                 msg: "Student ID: numbers only, dashes allowed between numbers (e.g. 2024-0123)." },
+    name:       { re: /^\p{L}[\p{L} .'\-]{1,98}$/u,    msg: "Name must be letters only (2–100 characters). Spaces, . ' - are allowed." },
+    program:    { re: /^\p{L}[\p{L} .,&()\-]{1,98}$/u, msg: "Program must be letters only (2–100 characters)." }
+};
+const clean = (name, v) => name === 'student_id' ? v.trim() : v.trim().replace(/\s+/g, ' ');
+
+function check(input) {
+    const rule = rules[input.name];
+    const val  = clean(input.name, input.value);
+    const ok   = rule.re.test(val) && (input.name !== 'student_id' || val.length <= 20);
+    input.classList.toggle('invalid', !ok && input.value !== '');
+    document.querySelector('[data-for="' + input.name + '"]').textContent = (!ok && input.value !== '') ? rule.msg : '';
+    return ok;
+}
+function setErr(field, msg) {
+    $(field).classList.add('invalid');
+    document.querySelector('[data-for="' + field + '"]').textContent = msg;
+}
+function idTaken(sid, excludeId) {
+    const c = noDash(sid);
+    return students.find(s => noDash(s.student_id) === c && s.id !== excludeId);
+}
+
+/* =========================
+   RENDER
+========================= */
+function matches(s) {
+    if (!q) return true;
+    const t = q.toLowerCase(), d = noDash(q).toLowerCase();
+    return s.student_id.toLowerCase().includes(t) || s.name.toLowerCase().includes(t) ||
+           s.program.toLowerCase().includes(t) || (d !== '' && noDash(s.student_id).includes(d));
+}
+
+function render() {
+    const active   = students.filter(s => !s.deleted_at);
+    const archived = students.filter(s =>  s.deleted_at);
+
+    // stats + nav counts
+    $('statActive').textContent   = $('navActiveCount').textContent  = active.length;
+    $('statArchived').textContent = $('navArchiveCount').textContent = archived.length;
+    $('statTotal').textContent    = students.length;
+    $('statPrograms').textContent = new Set(active.map(s => s.program).filter(Boolean)).size;
+
+    // tabs / panels
+    $('navActive').classList.toggle('on', view === 'active');
+    $('navArchive').classList.toggle('on', view === 'archive');
+    $('activeView').hidden  = view !== 'active';
+    $('archiveView').hidden = view !== 'archive';
+    $('q').placeholder = 'Search ' + (view === 'archive' ? 'archived students' : 'students') + ' by name, ID or program';
+    $('clearSearch').hidden = q === '';
+
+    const note = (shown, total, word) => q
+        ? shown + ' of ' + total + ' match “' + q + '”'
+        : total + ' ' + word;
+
+    if (view === 'active') {
+        const rows = active.filter(matches).sort((a, b) => b.id - a.id);
+        $('activeNote').textContent = note(rows.length, active.length, active.length === 1 ? 'student' : 'students');
+        $('activeBody').innerHTML = rows.length ? rows.map(s => `
+            <tr>
+                <td>${s.id}</td>
+                <td>${esc(s.student_id)}</td>
+                <td><div class="who"><span class="avatar">${esc(initial(s.name))}</span>${esc(s.name)}</div></td>
+                <td>${esc(s.program)}</td>
+                <td>
+                    <button type="button" class="edit-button" data-edit="${s.id}">Edit</button>
+                    <button type="button" class="delete-button" data-archive="${s.id}">Archive</button>
+                </td>
+            </tr>`).join('')
+          : `<tr><td colspan="5" class="empty">${q ? 'No active students match “' + esc(q) + '”. Try a different name, ID or program.' : 'No students yet. Add the first one using the form.'}</td></tr>`;
+    } else {
+        const rows = archived.filter(matches).sort((a, b) => new Date(b.deleted_at) - new Date(a.deleted_at));
+        $('archiveNote').textContent = note(rows.length, archived.length, 'archived');
+        $('archiveBody').innerHTML = rows.length ? rows.map(s => `
+            <tr>
+                <td>${s.id}</td>
+                <td>${esc(s.student_id)}</td>
+                <td><div class="who"><span class="avatar">${esc(initial(s.name))}</span>${esc(s.name)}</div></td>
+                <td>${esc(s.program)}</td>
+                <td>${esc(fmtDate(s.deleted_at))}</td>
+                <td><button type="button" class="restore-button" data-restore="${s.id}">Restore</button></td>
+            </tr>`).join('')
+          : `<tr><td colspan="6" class="empty">${q ? 'No archived students match “' + esc(q) + '”.' : 'The archive is empty.'}</td></tr>`;
+    }
+
+    // form mode
+    $('formTitle').textContent = editId ? '✏️ Edit student' : '➕ Add student';
+    $('submitBtn').textContent = editId ? 'Update student' : 'Save student';
+    $('submitBtn').className   = editId ? 'update-button'  : 'save-button';
+    $('cancelEdit').hidden = !editId;
+}
+
+function setView(v) { view = v; if (v !== 'active') resetForm(); render(); document.body.classList.remove('nav-open'); }
+
+/* =========================
+   FORM: add / edit
+========================= */
+const form = $('studentForm');
+
+function resetForm() {
+    editId = null; form.reset();
+    form.querySelectorAll('input').forEach(i => i.classList.remove('invalid'));
+    form.querySelectorAll('.err').forEach(e => e.textContent = '');
+}
+
+$('student_id').addEventListener('input', e => {
+    const el = e.target;
+    el.value = el.value.replace(/[^\d-]/g, '').replace(/^-+/, '').replace(/-{2,}/g, '-');
+});
+form.querySelectorAll('input[type=text]').forEach(i => i.addEventListener('input', () => check(i)));
+
+form.addEventListener('submit', ev => {
+    ev.preventDefault();
+    let allOk = true, firstBad = null;
+    form.querySelectorAll('input[type=text]').forEach(i => {
+        const ok = check(i);
+        if (!ok) {
+            allOk = false;
+            if (!i.value) setErr(i.name, rules[i.name].msg);
+            firstBad = firstBad || i;
+        }
+    });
+    if (!allOk) { firstBad.focus(); return; }
+
+    const v = {
+        student_id: clean('student_id', $('student_id').value),
+        name:       clean('name', $('name').value),
+        program:    clean('program', $('program').value)
+    };
+    const dup = idTaken(v.student_id, editId || 0);
+    if (dup) {
+        setErr('student_id', editId ? 'Another student already uses this Student ID'
+            : dup.deleted_at ? 'This Student ID is in the Archive. Restore it from the Archive tab instead.'
+                             : 'This Student ID already exists.');
+        $('student_id').focus();
+        return;
+    }
+
+    if (editId) {
+        const s = students.find(x => x.id === editId && !x.deleted_at);
+        if (s) Object.assign(s, v);
+        save(); resetForm(); render(); toast('Student updated.', 'success');
+    } else {
+        students.push({ id: nextId(), ...v, deleted_at: null });
+        save(); resetForm(); render(); toast('Student added.', 'success');
+        $('student_id').focus();
+    }
+});
+
+$('cancelEdit').addEventListener('click', () => { resetForm(); render(); });
+
+/* =========================
+   TABLE ACTIONS (edit / archive / restore)
+========================= */
+document.addEventListener('click', ev => {
+    const t = ev.target.closest('[data-edit],[data-archive],[data-restore],[data-view]');
+    if (!t) return;
+
+    if (t.dataset.view) { ev.preventDefault(); setView(t.dataset.view); return; }
+
+    if (t.dataset.edit) {
+        const s = students.find(x => x.id === +t.dataset.edit);
+        if (!s) return;
+        editId = s.id;
+        $('student_id').value = s.student_id; $('name').value = s.name; $('program').value = s.program;
+        form.querySelectorAll('input').forEach(i => i.classList.remove('invalid'));
+        form.querySelectorAll('.err').forEach(e => e.textContent = '');
+        render();
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        $('name').focus();
+    }
+
+    if (t.dataset.archive) openModal(students.find(x => x.id === +t.dataset.archive));
+
+    if (t.dataset.restore) {
+        const s = students.find(x => x.id === +t.dataset.restore && x.deleted_at);
+        if (s) { s.deleted_at = null; save(); render(); toast('Student restored to Active records.', 'success'); }
+        else   { toast('Student is not in the Archive.', 'error'); }
+    }
+});
+
+/* =========================
+   TWO-STEP ARCHIVE CONFIRMATION
+========================= */
+const overlay = $('overlay'), step1 = $('step1'), step2 = $('step2');
+const confirmInput = $('aConfirm'), doArchive = $('doArchive');
+let target = null;
+
+function openModal(s) {
+    if (!s) return;
+    target = s;
+    $('aName').textContent = s.name;
+    $('aSid1').textContent = $('aSid2').textContent = s.student_id;
+    confirmInput.value = ''; doArchive.disabled = true;
+    step1.classList.add('on'); step2.classList.remove('on');
+    overlay.classList.add('open'); overlay.setAttribute('aria-hidden', 'false');
+}
+function closeModal() { overlay.classList.remove('open'); overlay.setAttribute('aria-hidden', 'true'); target = null; }
+
+overlay.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeModal));
+overlay.addEventListener('click', ev => { if (ev.target === overlay) closeModal(); });
+$('toStep2').addEventListener('click', () => { step1.classList.remove('on'); step2.classList.add('on'); confirmInput.focus(); });
+confirmInput.addEventListener('input', () => { doArchive.disabled = !target || confirmInput.value.trim() !== target.student_id; });
+
+$('archiveForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    if (!target || confirmInput.value.trim() !== target.student_id) {
+        toast('Student ID did not match. Nothing was archived.', 'error'); return;
+    }
+    const s = students.find(x => x.id === target.id && !x.deleted_at);
+    if (s) {
+        s.deleted_at = new Date().toISOString();
+        if (editId === s.id) resetForm();
+        save(); render();
+        toast(s.name + ' moved to Archive. You can restore it anytime.', 'success');
+    } else {
+        toast('Student not found or already archived.', 'error');
+    }
+    closeModal();
+});
+
+/* =========================
+   SEARCH + DASHBOARD CHROME
+========================= */
+$('q').addEventListener('input', e => { q = e.target.value.trim(); render(); });
+$('clearSearch').addEventListener('click', ev => { ev.preventDefault(); $('q').value = ''; q = ''; render(); $('q').focus(); });
+
+$('menuBtn').addEventListener('click', () => document.body.classList.toggle('nav-open'));
+$('scrim').addEventListener('click', () => document.body.classList.remove('nav-open'));
+
+document.addEventListener('keydown', ev => {
+    const tag = (document.activeElement || {}).tagName;
+    if (ev.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA') { ev.preventDefault(); $('q').focus(); }
+    if (ev.key === 'Escape') { closeModal(); document.body.classList.remove('nav-open'); }
+});
+
+/* ---- start ---- */
+load();
+render();
+if (memoryOnly) toast('Browser storage is unavailable: changes will be lost when you close this page.', 'error');
+</script>
+
+</body>
+</html>
